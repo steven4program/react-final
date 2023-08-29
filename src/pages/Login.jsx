@@ -1,16 +1,16 @@
-import axios from 'axios';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Check from '../assets/images/check.png';
-// import Work from '../assets/images/img.png';
+import axios from "axios";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Check from "../assets/images/check.png";
+// import Work from "../assets/images/img.png";
 
-const base_url = 'https://todolist-api.hexschool.io/';
+const base_url = "https://todolist-api.hexschool.io/";
 
 function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
 
   const handleInputChange = (e) => {
@@ -26,9 +26,9 @@ function Login() {
     try {
       const res = await axios.post(`${base_url}users/sign_in`, formData);
       const { token } = res.data;
-      localStorage.setItem('token', token);
+      localStorage.setItem("token", token);
       if (res.data.status) {
-        navigate('/');
+        navigate("/");
       }
     } catch (error) {
       console.log(error);
