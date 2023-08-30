@@ -7,7 +7,7 @@ import Login from "./pages/Login"
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Navbar />}>
-      <Route path="todos" element={<Todos />} />
+      <Route path="/" element={<Todos />} />
       <Route path="login" element={<Login />} />
     </Route>
   )
