@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
+import Swal from "sweetalert2";
 import Work from "../assets/images/img.png";
 
 const base_url = "https://todolist-api.hexschool.io/";
@@ -24,14 +25,24 @@ function Login() {
     e.preventDefault();
     try {
       const res = await axios.post(`${base_url}users/sign_in`, formData);
-      console.log(res)
       const { token } = res.data;
       localStorage.setItem("token", token);
       if (res.data.status) {
+        Swal.fire({
+          position: 'top-end',
+          icon: 'success',
+          title: '登入成功',
+          showConfirmButton: false,
+          timer: 1500
+        })
         navigate("/");
       }
     } catch (error) {
-      console.log(error);
+      Swal.fire({
+        icon: "error",
+        title: "登入失敗",
+        text: error.response.data.message,
+      });
     }
   }
 

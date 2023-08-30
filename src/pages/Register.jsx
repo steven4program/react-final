@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
+import Swal from "sweetalert2";
 import Work from '../assets/images/img.png';
 
 const base_url = "https://todolist-api.hexschool.io/"
@@ -27,7 +28,11 @@ function Register() {
     try {
       const { confirmPassword, ...dataToSend } = formData
       if (formData.password !== confirmPassword) {
-        alert("密碼不一致");
+        Swal.fire({
+          icon: "error",
+          title: "註冊失敗",
+          text: "兩次輸入的密碼不一致",
+        });
         return;
       }
       const res = await axios.post(`${base_url}users/sign_up`, dataToSend);
@@ -36,7 +41,11 @@ function Register() {
       }
     }
     catch (error) {
-      console.log(error);
+      Swal.fire({
+        icon: "error",
+        title: "註冊失敗",
+        text: error.response.data.message,
+      });
     }
   }
 
@@ -72,6 +81,7 @@ function Register() {
                 value={formData.nickname}
                 placeholder="請輸入暱稱"
                 onChange={handleInputChange}
+                required
               />
             </div>
             <div className="d-flex flex-column mt-3">
