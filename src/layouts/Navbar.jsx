@@ -61,7 +61,7 @@ const Navbar = () => {
               <div className="d-flex">
                 <h4 className="fw-bold me-4 my-auto d-none d-md-block">{nickname}的 Todo List</h4>
                 <button className="btn btn-outline-secondary">
-                  <p className="fw-bold text-secondary my-auto" onClick={() => signOut}>Logout</p>
+                  <p className="fw-bold text-secondary my-auto" onClick={() => signOut()}>Logout</p>
                 </button>
               </div>
             )
