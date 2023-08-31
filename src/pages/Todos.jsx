@@ -9,10 +9,13 @@ import Loading from "../layouts/Loading";
 function Todos() {
   const navigate = useNavigate();
   const [todos, setTodos] = useState([]);
-  const [newTodo, setNewTodo] = useState({});
+  const [currentTodos, setCurrentTodos] = useState([]);
+  const [newTodo, setNewTodo] = useState({content: ""});
   const [todoListType, setTodoListType] = useState("all");
   const [undoneTodoCounts, setUndoneTodoCounts] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(null);
+  const [editText, setEditText] = useState("");
   
   const base_url = "https://todolist-api.hexschool.io/";
   const token = localStorage.getItem("token");
@@ -35,43 +38,35 @@ function Todos() {
   const getTodoList = async () => {
     setIsLoading(true);
     const todoList = await fetchTodos();
-    const undoneTodoCounts = await todoList.filter((todo) => {
-      return todo.status === false;
-    }).length;
-    setUndoneTodoCounts(undoneTodoCounts);
     setTodos(todoList);
+    setUndoneTodoCounts(await todoList.filter((todo) => todo.status === false).length);
+    setCurrentTodos(todoList);
     setTodoListType("all");
     setIsLoading(false);
+    return todoList;
   };
 
   const getTodosByStatus = async (status) => {
+    setIsLoading(true);
     const todoList = await fetchTodos();
+    setTodos(todoList);
+    const undoneTodolist = await todoList.filter((todo) => { return todo.status === false});
+    setUndoneTodoCounts(undoneTodolist.length);
     const filteredTodos = await todoList.filter((todo) => {
       return todo.status === status;
     });
-    const undoneTodoCounts = await todoList.filter((todo) => {
-      return todo.status === false;
-    }).length;
-    setUndoneTodoCounts(undoneTodoCounts);
-    if(filteredTodos.length === 0) {
-      setTodos(["none"]);
-      return;
-    }
-    setTodos(filteredTodos);
+    setCurrentTodos(filteredTodos);
+    setIsLoading(false);
   };
 
   const getUndoneTodos = async () => {
-    setIsLoading(true);
     setTodoListType("undone");
     await getTodosByStatus(false);
-    setIsLoading(false);
   };
 
   const getDoneTodos = async () => {
-    setIsLoading(true);
     setTodoListType("done");
     await getTodosByStatus(true);
-    setIsLoading(false);
   };
 
   const getTodoListByType = async (type) => {
@@ -102,7 +97,7 @@ function Todos() {
       });
       if (res.status) {
         setIsLoading(false);
-        getTodoList();
+        getTodoListByType(todoListType);
         setNewTodo({
           content: "",
         });
@@ -111,7 +106,31 @@ function Todos() {
       return
     } catch (error) {
       setIsLoading(false);
-      handleApiRes("error", "代辦事項新增失敗", error.response.data.message)
+      handleApiRes("error", "待辦事項新增失敗", error.response.data.message)
+    }
+  };
+  
+  const editTodo = async (id, content) => {
+    setIsLoading(true);
+    setIsEditing(true);
+    try {
+      const res = await axios.put(`${base_url}todos/${id}`, { content }, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (res.status) {
+        setEditText("");
+        setIsEditing(false);
+        getTodoListByType(todoListType);
+        setIsLoading(false);
+        return
+      }
+    } catch (error) {
+      setEditText("");
+      setIsLoading(false);
+      setIsEditing(false);
+      handleApiRes("error", "待辦事項編輯失敗", error.response.data.message)
     }
   };
 
@@ -125,11 +144,11 @@ function Todos() {
       });
       if (res.status) {
         setIsLoading(false);
-        getTodoList();
+        getTodoListByType(todoListType);
       }
     } catch (error) {
       setIsLoading(false);
-      handleApiRes("error", "代辦事項刪除失敗", error.response.data.message)
+      handleApiRes("error", "待辦事項刪除失敗", error.response.data.message)
     }
   };
 
@@ -141,11 +160,11 @@ function Todos() {
       });
       if (doneTodos.length === 0) {
         setIsLoading(false);
-        handleApiRes("info", "", "目前沒有已完成的代辦事項")
+        handleApiRes("info", "", "目前沒有已完成的待辦事項")
         return;
       }
       Swal.fire({
-        title: '確定刪除所有代辦事項嗎?',
+        title: '確定刪除所有待辦事項嗎?',
         text: "此動作無法復原",
         icon: 'warning',
         showCancelButton: true,
@@ -170,7 +189,7 @@ function Todos() {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
-      handleApiRes("error", "刪除所有代辦事項失敗", error.response.data.message)
+      handleApiRes("error", "刪除所有待辦事項失敗", error.response.data.message)
     }
   };
 
@@ -185,7 +204,7 @@ function Todos() {
         getTodoListByType(todoListType)
       }
     } catch (error) {
-      handleApiRes("error", "代辦事項狀態切換失敗", error.response.data.message)
+      handleApiRes("error", "待辦事項狀態切換失敗", error.response.data.message)
     }
   };
   
@@ -224,7 +243,7 @@ function Todos() {
         <Loading isLoading={isLoading} />
         <form className="d-flex justify-content-center" onSubmit={(e) => addTodo(e)}>
           <div className="mb-3 col-auto">
-            <input type="text" className="form-control" value={newTodo.content} placeholder="請輸入代辦事項" style={{minWidth: "460px"}} onChange={handleInputChange} />
+            <input type="text" className="form-control" value={newTodo.content} placeholder="請輸入待辦事項" style={{minWidth: "460px"}} onChange={handleInputChange} />
           </div>
           <button type="submit" className="btn btn-dark ms-2 fw-bold" style={{height: "38px"}}>+</button>
         </form>
@@ -246,27 +265,45 @@ function Todos() {
               <div className="px-5">
                 <ul className="todoList_item p-0">
                   {
-                    todos.map((todo) => {
-                      return todo === "none" ? (
-                        <li className="d-flex flex-column align-items-center" key={todo}>
+                    currentTodos.length === 0 ? (
+                        <li className="d-flex flex-column align-items-center" key={0}>
                           <h3 className="fw-bold mt-3">目前沒有{todoListType === "done" ? "已完成的" : "" }待辦事項</h3>
                         </li>
                       ) : (
-                        <li className="mb-3 d-flex justify-content-between" key={todo.id} style={{borderBottom: "1px solid #E5E5E5", height: "48px"}}>
-                          <div className="form-check my-auto">
-                            <input className="form-check-input" checked={todo.status} type="checkbox" id={todo.id} onChange={() => {toggleTodo(todo.id)}}/>
-                            <label className="form-check-label" htmlFor={todo.id} style={{color: "#333333"}}>
-                              {todo.content}
-                            </label>
-                          </div>
-                          <div>
-                            <button className="btn ms-2 fw-bold mt-1 text-danger" onClick={() => deleteTodo(todo.id)}>
-                              X
-                            </button>
-                          </div>
-                        </li>
+                        currentTodos.map((todo) => {
+                          return (
+                            <li className="mb-3 d-flex justify-content-between" key={todo.id} style={{borderBottom: "1px solid #E5E5E5", height: "48px"}}>
+                              <div className="form-check my-auto">
+                                { isEditing === todo.id ? (
+                                  <input className="form-control" type="text" id={todo.id} value={editText} onChange={(e) => {setEditText(e.target.value)}}/>
+                                ) : (
+                                  <>
+                                    <input className="form-check-input" checked={todo.status} type="checkbox" id={todo.id} onChange={() => {toggleTodo(todo.id)}}/>
+                                    <label className="form-check-label" htmlFor={todo.id} style={{color: "#333333"}}>
+                                      {todo.content}
+                                    </label>
+                                  </>
+                                )}
+                              </div>
+                              <div>
+                                {isEditing === todo.id ? (
+                                  <>
+                                    <button className="btn ms-2 fw-bold mt-1 text-danger" onClick={() => editTodo(todo.id, editText)}>更改</button>
+                                    <button className="btn ms-2 fw-bold mt-1 text-secondary" onClick={() => setIsEditing(null)}>取消</button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button className="btn ms-2 fw-bold mt-1 text-success" onClick={() => {setIsEditing(todo.id); setEditText(todo.content);}}>編輯</button>
+                                    <button className="btn ms-2 fw-bold mt-1 text-danger" onClick={() => deleteTodo(todo.id)}>
+                                      X
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </li>
+                          )
+                        })
                       )
-                    })
                   }
                 </ul>
                 <div className="d-flex justify-content-between">
@@ -274,7 +311,7 @@ function Todos() {
                     undoneTodoCounts === 0 ? (
                       <p className="text-secondary my-auto">無待完成項目</p>
                     ) : (
-                      <p className="text-info my-auto">共 {undoneTodoCounts} 項待完成項目</p>
+                      <p className="text-info my-auto">共 {undoneTodoCounts} 項 待完成項目</p>
                     )
                   }
                   <button className="btn text-danger" onClick={() => deleteAllDoneTodos()}>清除已完成項目</button>
