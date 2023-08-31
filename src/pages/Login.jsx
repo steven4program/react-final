@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import Swal from "sweetalert2";
 import { handleApiRes } from "../utils/errorHandler";
@@ -43,6 +43,14 @@ function Login() {
       handleApiRes("error", "登入失敗", error.response.data.message)
     }
   }
+
+  useEffect(() => {
+    const checkToken = localStorage.getItem("token");
+    if (checkToken) {
+      navigate("/");
+      return;
+    }
+  }, []);
 
   return (
     <div className="container mt-5">
