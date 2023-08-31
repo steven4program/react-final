@@ -211,7 +211,7 @@ function Todos() {
   const handleInputChange = (e) => {
     const { value } = e.target;
     setNewTodo({
-      content: value,
+      content: value.trim(),
     });
   };
 

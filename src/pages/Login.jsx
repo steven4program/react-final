@@ -86,9 +86,7 @@ function Login() {
               />
             </div>
             <button className="fw-bold btn btn-success mt-4" type="submit">登入</button>
-            <button className="fw-bold btn btn-outline-secondary mt-3">
-              <NavLink className="fw-bold text-dark" to="/register">註冊帳號</NavLink>
-            </button>
+            <NavLink className="fw-bold btn btn-outline-secondary mt-3 text-dark" to="/register">註冊帳號</NavLink>
           </form>
         </div>
       </div>

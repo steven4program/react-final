@@ -112,9 +112,7 @@ function Register() {
               />
             </div>
             <button className="fw-bold btn btn-success mt-4" type="submit">註冊帳號</button>
-            <button className="fw-bold btn btn-outline-secondary mt-3">
-              <NavLink className="fw-bold text-dark" to="/login">登入</NavLink>
-            </button>
+            <NavLink className="fw-bold text-dark btn btn-outline-secondary mt-3" to="/login">登入</NavLink>
           </form>
         </div>
       </div>
