@@ -33,11 +33,12 @@ const Navbar = () => {
       });
       if (res.status) {
         Swal.fire({
+          toast: true,
           position: 'top-end',
           icon: 'success',
           title: '登出成功',
           showConfirmButton: false,
-          timer: 1500
+          timer: 1000
         })
         localStorage.removeItem("token");
         setToken("");
@@ -65,7 +66,7 @@ const Navbar = () => {
         <div className="container">
           <div className="navbar-brand d-flex">
             <img className="img-fluid" src={Check} alt="check"/>
-            <h1><NavLink className="text-black fs-2 fw-bold" to="/todos">ONLINE TODO LIST</NavLink></h1>
+            <h1><NavLink className="text-black fs-2 fw-bold" to="/">ONLINE TODO LIST</NavLink></h1>
           </div>
           { !token ? (
               <></>

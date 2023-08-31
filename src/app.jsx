@@ -8,11 +8,10 @@ import ErrorPage from "./pages/ErrorPage"
 
 const router = createHashRouter(
   createRoutesFromElements(
-    <Route path="/" element={<Navbar />}>
-      <Route path="" element={<Todos />} />
+    <Route path="/" element={<Navbar />} errorElement={<ErrorPage />}>
+      <Route path="/" element={<Todos />} />
       <Route path="login" element={<Login />} />
       <Route path="register" element={<Register />} />
-      <Route path="*" errorElement={<ErrorPage/>} />
     </Route>
   )
 )

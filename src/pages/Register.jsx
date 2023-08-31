@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
-import Swal from "sweetalert2";
+import Swal from 'sweetalert2';
+import { handleApiRes } from "../utils/errorHandler";
 import Work from '../assets/images/img.png';
 
 const base_url = "https://todolist-api.hexschool.io/"
@@ -28,24 +29,24 @@ function Register() {
     try {
       const { confirmPassword, ...dataToSend } = formData
       if (formData.password !== confirmPassword) {
-        Swal.fire({
-          icon: "error",
-          title: "註冊失敗",
-          text: "兩次輸入的密碼不一致",
-        });
+        handleApiRes("error", "註冊失敗", "兩次輸入的密碼不一致")
         return;
       }
       const res = await axios.post(`${base_url}users/sign_up`, dataToSend);
       if (res.status) {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: '註冊成功',
+          showConfirmButton: false,
+          timer: 1500
+        })
         navigate("/login");
       }
     }
     catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "註冊失敗",
-        text: error.response.data.message,
-      });
+      handleApiRes("error", "註冊失敗", error.response.data.message)
     }
   }
 

@@ -3,6 +3,7 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { handleApiRes } from "../utils/errorHandler";
 import Loading from "../layouts/Loading";
 
 function Todos() {
@@ -10,7 +11,7 @@ function Todos() {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState({});
   const [todoListType, setTodoListType] = useState("all");
-  const [undoneTodoCount, setUndoneTodoCount] = useState(0);
+  const [undoneTodoCounts, setUndoneTodoCounts] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
   const base_url = "https://todolist-api.hexschool.io/";
@@ -27,58 +28,72 @@ function Todos() {
         return res.data.data;
       }
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "請求資料失敗",
-        text: error.response.data.message,
-      });
+      handleApiRes("error", "請求資料失敗", error.response.data.message)
     }
   };
 
   const getTodoList = async () => {
     setIsLoading(true);
     const todoList = await fetchTodos();
-    setUndoneTodoCount(todoList.filter((todo) => todo.status === false).length)
+    const undoneTodoCounts = await todoList.filter((todo) => {
+      return todo.status === false;
+    }).length;
+    setUndoneTodoCounts(undoneTodoCounts);
     setTodos(todoList);
     setTodoListType("all");
     setIsLoading(false);
   };
 
-  const getUndoneTodos = async () => {
-    setIsLoading(true);
+  const getTodosByStatus = async (status) => {
     const todoList = await fetchTodos();
-    const undoneTodos = todoList.filter((todo) => {
-      return todo.status === false;
+    const filteredTodos = await todoList.filter((todo) => {
+      return todo.status === status;
     });
-    setTodoListType("undone");
-    if (undoneTodos.length === 0) {
-      setIsLoading(false);
+    const undoneTodoCounts = await todoList.filter((todo) => {
+      return todo.status === false;
+    }).length;
+    setUndoneTodoCounts(undoneTodoCounts);
+    if(filteredTodos.length === 0) {
       setTodos(["none"]);
       return;
     }
+    setTodos(filteredTodos);
+  };
+
+  const getUndoneTodos = async () => {
+    setIsLoading(true);
+    setTodoListType("undone");
+    await getTodosByStatus(false);
     setIsLoading(false);
-    setUndoneTodoCount(undoneTodos.length)
-    setTodos(undoneTodos);
   };
 
   const getDoneTodos = async () => {
     setIsLoading(true);
-    const todoList = await fetchTodos();
-    const doneTodos = todoList.filter((todo) => {
-      return todo.status === true;
-    });
     setTodoListType("done");
-    if (doneTodos.length === 0) {
-      setIsLoading(false);
-      setTodos(["none"]);
-      return;
-    }
+    await getTodosByStatus(true);
     setIsLoading(false);
-    setTodos(doneTodos);
   };
+
+  const getTodoListByType = async (type) => {
+    switch (type) {
+      case "all":
+        await getTodoList();
+        break;
+      case "undone":
+        await getUndoneTodos();
+        break;
+      case "done":
+        await getDoneTodos();
+        break;
+      default:
+        break;
+    }
+  };
+
 
   const addTodo = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const res = await axios.post(`${base_url}todos`, newTodo, {
         headers: {
@@ -91,14 +106,12 @@ function Todos() {
         setNewTodo({
           content: "",
         });
+        return;
       }
+      return
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "代辦事項新增失敗",
-        text: error.response.data.message,
-      });
-      console.log(error);
+      setIsLoading(false);
+      handleApiRes("error", "代辦事項新增失敗", error.response.data.message)
     }
   };
 
@@ -115,7 +128,8 @@ function Todos() {
         getTodoList();
       }
     } catch (error) {
-      console.log(error);
+      setIsLoading(false);
+      handleApiRes("error", "代辦事項刪除失敗", error.response.data.message)
     }
   };
 
@@ -126,11 +140,8 @@ function Todos() {
         return todo.status === true;
       });
       if (doneTodos.length === 0) {
-        Swal.fire({
-          icon: "info",
-          text: "目前沒有已完成的代辦事項",
-        });
         setIsLoading(false);
+        handleApiRes("info", "", "目前沒有已完成的代辦事項")
         return;
       }
       Swal.fire({
@@ -151,23 +162,19 @@ function Todos() {
               },
             });
           }
-          setIsLoading(false);
-          getTodoList();
-          setTodoListType("all");
+          getTodoListByType(todoListType);
         } else if (result.isDenied) {
           Swal.fire('取消動作', '', 'info')
         }
       })
       setIsLoading(false);
-      getTodoList();
-      setTodoListType("all");
     } catch (error) {
-      console.log(error);
+      setIsLoading(false);
+      handleApiRes("error", "刪除所有代辦事項失敗", error.response.data.message)
     }
   };
 
   const toggleTodo = async (id) => {
-    setIsLoading(true);
     try {
       const res = await axios.patch(`${base_url}todos/${id}/toggle`, {}, {
         headers: {
@@ -175,22 +182,10 @@ function Todos() {
         },
       });
       if (res.status) {
-        setIsLoading(false);
-        switch (todoListType) {
-          case "all":
-            getTodoList();
-            break;
-          case "undone":
-            getUndoneTodos();
-            break;
-          case "done":
-            getDoneTodos();
-            break;
-          default:
-            break;
-      }}
+        getTodoListByType(todoListType)
+      }
     } catch (error) {
-      console.log(error);
+      handleApiRes("error", "代辦事項狀態切換失敗", error.response.data.message)
     }
   };
   
@@ -205,6 +200,7 @@ function Todos() {
     const checkToken = localStorage.getItem("token");
     if (!checkToken) {
       navigate("/login");
+      return;
     }
     getTodoList();
   }, []);
@@ -273,19 +269,16 @@ function Todos() {
                     })
                   }
                 </ul>
-                { 
-                  undoneTodoCount === 0 ? (
-                    <div className="d-flex justify-content-between">
+                <div className="d-flex justify-content-between">
+                  {
+                    undoneTodoCounts === 0 ? (
                       <p className="text-secondary my-auto">無待完成項目</p>
-                      <button className="btn text-danger" onClick={() => deleteAllDoneTodos()}>清除已完成項目</button>
-                    </div>
-                  ) : (
-                    <div className="d-flex justify-content-between">
-                      <p className="text-info my-auto">共 {undoneTodoCount} 項待完成項目</p>
-                      <button className="btn text-danger" onClick={() => deleteAllDoneTodos()}>清除已完成項目</button>
-                    </div>
-                  )
-                }
+                    ) : (
+                      <p className="text-info my-auto">共 {undoneTodoCounts} 項待完成項目</p>
+                    )
+                  }
+                  <button className="btn text-danger" onClick={() => deleteAllDoneTodos()}>清除已完成項目</button>
+                </div>
               </div>
             </div>
           )
