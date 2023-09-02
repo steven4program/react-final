@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import { handleApiRes } from "../utils/errorHandler";
 import Loading from "../layouts/Loading";
 
-const { VITE_APP_HOST} = import.meta.env;
+const { VITE_APP_HOST } = import.meta.env;
 
 function Todos() {
   const navigate = useNavigate();
@@ -18,16 +18,10 @@ function Todos() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(null);
   const [editText, setEditText] = useState("");
-  
-  const token = localStorage.getItem("token");
 
   const fetchTodos = async () => {
     try {
-      const res = await axios.get(`${VITE_APP_HOST}/todos`, {
-        headers: {
-          Authorization: token,
-        },
-      });
+      const res = await axios.get(`/todos`);
       if (res.status) {
         return res.data.data;
       }
@@ -91,11 +85,7 @@ function Todos() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await axios.post(`${VITE_APP_HOST}/todos`, newTodo, {
-        headers: {
-          Authorization: token,
-        },
-      });
+      const res = await axios.post(`/todos`, newTodo);
       if (res.status) {
         setIsLoading(false);
         getTodoListByType(todoListType);
@@ -115,11 +105,7 @@ function Todos() {
     setIsLoading(true);
     setIsEditing(true);
     try {
-      const res = await axios.put(`${VITE_APP_HOST}/todos/${id}`, { content }, {
-        headers: {
-          Authorization: token,
-        },
-      });
+      const res = await axios.put(`/todos/${id}`, { content });
       if (res.status) {
         setEditText("");
         setIsEditing(false);
@@ -138,11 +124,7 @@ function Todos() {
   const deleteTodo = async (id) => {
     setIsLoading(true);
     try {
-      const res = await axios.delete(`${VITE_APP_HOST}/todos/${id}`, {
-        headers: {
-          Authorization: token,
-        },
-      });
+      const res = await axios.delete(`/todos/${id}`);
       if (res.status) {
         setIsLoading(false);
         getTodoListByType(todoListType);
@@ -176,11 +158,7 @@ function Todos() {
       }).then(async (result) => {
         if (result.isConfirmed) {
           for (let i = 0; i < doneTodos.length; i++) {
-            await axios.delete(`${VITE_APP_HOST}/todos/${doneTodos[i].id}`, {
-              headers: {
-                Authorization: token,
-              },
-            });
+            await axios.delete(`/todos/${doneTodos[i].id}`);
           }
           getTodoListByType(todoListType);
         } else if (result.isDenied) {
@@ -196,11 +174,7 @@ function Todos() {
 
   const toggleTodo = async (id) => {
     try {
-      const res = await axios.patch(`${VITE_APP_HOST}/todos/${id}/toggle`, {}, {
-        headers: {
-          Authorization: token,
-        },
-      });
+      const res = await axios.patch(`/todos/${id}/toggle`);
       if (res.status) {
         getTodoListByType(todoListType)
       }
@@ -217,12 +191,25 @@ function Todos() {
   };
 
   useEffect(() => {
-    const checkToken = localStorage.getItem("token");
-    if (!checkToken) {
-      navigate("/login");
-      return;
-    }
-    getTodoList();
+    const cookieValue = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('token='))
+      ?.split('=')[1];
+
+    axios.defaults.headers.common['Authorization'] = cookieValue;
+    axios.defaults.baseURL = VITE_APP_HOST
+
+    axios.get(`/users/checkout`)
+      .then((res) => {
+        if (res.status) {
+          getTodoList();
+        }
+      })
+      .catch((error) => {
+        navigate("/auth/login");
+        handleApiRes("error", "登入失敗", error.response.data.message)
+      }
+    );
   }, []);
 
   const activeStyle = {

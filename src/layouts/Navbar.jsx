@@ -4,13 +4,13 @@ import Swal from "sweetalert2";
 import axios from "axios";
 import Check from "../assets/images/check.png";
 
+const { VITE_APP_HOST } = import.meta.env;
+
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [nickname, setNickname] = useState("");
-  const [token, setToken] = useState("");
-
-  const base_url = "https://todolist-api.hexschool.io/";
+  const [isLogin, setIsLogin] = useState(false);
 
   function getNicknameFromToken(token) {
     try {
@@ -26,11 +26,7 @@ const Navbar = () => {
 
   const signOut = async () => {
     try {
-      const res = await axios.post(`${base_url}users/sign_out`, null, {
-        headers: {
-          Authorization: token,
-        },
-      });
+      const res = await axios.post(`/users/sign_out`);
       if (res.status) {
         Swal.fire({
           toast: true,
@@ -40,10 +36,10 @@ const Navbar = () => {
           showConfirmButton: false,
           timer: 1000
         })
-        localStorage.removeItem("token");
-        setToken("");
+        document.cookie = `token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        setIsLogin(false);
         setNickname("");
-        navigate("/login");
+        navigate("/auth/login");
       }
     } catch (error) {
       console.log(error);
@@ -51,13 +47,21 @@ const Navbar = () => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      return
-    }
-    const userNickname = getNicknameFromToken(token)
+    const cookieValue = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('token='))
+      ?.split('=')[1];
+    axios.defaults.headers.common['Authorization'] = cookieValue;
+    axios.defaults.baseURL = VITE_APP_HOST
+    axios.get(`/users/checkout`).then(res => {
+      if (res.status) {
+        setIsLogin(true);
+      }
+    }).catch(err => {
+      console.log(err);
+    })
+    const userNickname = getNicknameFromToken(cookieValue)
     setNickname(userNickname);
-    setToken(token);
   }, [location]);
 
   return (
@@ -68,7 +72,7 @@ const Navbar = () => {
             <img className="img-fluid" src={Check} alt="check"/>
             <h1><NavLink className="text-black fs-2 fw-bold" to="/">ONLINE TODO LIST</NavLink></h1>
           </div>
-          { !token ? (
+          { !isLogin ? (
               <></>
             ) : (
               <div className="d-flex">
