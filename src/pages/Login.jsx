@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import { handleApiRes } from "../utils/errorHandler";
 import Work from "../assets/images/img.png";
 
-const base_url = "https://todolist-api.hexschool.io/";
+const { VITE_APP_HOST } = import.meta.env;
 
 function Login() {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${base_url}users/sign_in`, formData);
+      const res = await axios.post(`${VITE_APP_HOST}/users/sign_in`, formData);
       const { token } = res.data;
       localStorage.setItem("token", token);
       if (res.data.status) {

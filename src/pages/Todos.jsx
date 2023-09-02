@@ -6,6 +6,8 @@ import Swal from "sweetalert2";
 import { handleApiRes } from "../utils/errorHandler";
 import Loading from "../layouts/Loading";
 
+const { VITE_APP_HOST} = import.meta.env;
+
 function Todos() {
   const navigate = useNavigate();
   const [todos, setTodos] = useState([]);
@@ -17,12 +19,11 @@ function Todos() {
   const [isEditing, setIsEditing] = useState(null);
   const [editText, setEditText] = useState("");
   
-  const base_url = "https://todolist-api.hexschool.io/";
   const token = localStorage.getItem("token");
 
   const fetchTodos = async () => {
     try {
-      const res = await axios.get(`${base_url}todos`, {
+      const res = await axios.get(`${VITE_APP_HOST}/todos`, {
         headers: {
           Authorization: token,
         },
@@ -90,7 +91,7 @@ function Todos() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await axios.post(`${base_url}todos`, newTodo, {
+      const res = await axios.post(`${VITE_APP_HOST}/todos`, newTodo, {
         headers: {
           Authorization: token,
         },
@@ -114,7 +115,7 @@ function Todos() {
     setIsLoading(true);
     setIsEditing(true);
     try {
-      const res = await axios.put(`${base_url}todos/${id}`, { content }, {
+      const res = await axios.put(`${VITE_APP_HOST}/todos/${id}`, { content }, {
         headers: {
           Authorization: token,
         },
@@ -137,7 +138,7 @@ function Todos() {
   const deleteTodo = async (id) => {
     setIsLoading(true);
     try {
-      const res = await axios.delete(`${base_url}todos/${id}`, {
+      const res = await axios.delete(`${VITE_APP_HOST}/todos/${id}`, {
         headers: {
           Authorization: token,
         },
@@ -175,7 +176,7 @@ function Todos() {
       }).then(async (result) => {
         if (result.isConfirmed) {
           for (let i = 0; i < doneTodos.length; i++) {
-            await axios.delete(`${base_url}todos/${doneTodos[i].id}`, {
+            await axios.delete(`${VITE_APP_HOST}/todos/${doneTodos[i].id}`, {
               headers: {
                 Authorization: token,
               },
@@ -195,7 +196,7 @@ function Todos() {
 
   const toggleTodo = async (id) => {
     try {
-      const res = await axios.patch(`${base_url}todos/${id}/toggle`, {}, {
+      const res = await axios.patch(`${VITE_APP_HOST}/todos/${id}/toggle`, {}, {
         headers: {
           Authorization: token,
         },

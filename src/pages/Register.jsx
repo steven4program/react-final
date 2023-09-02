@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { handleApiRes } from "../utils/errorHandler";
 import Work from '../assets/images/img.png';
 
-const base_url = "https://todolist-api.hexschool.io/"
+const { VITE_APP_HOST } = import.meta.env;
 
 function Register() {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ function Register() {
         handleApiRes("error", "註冊失敗", "兩次輸入的密碼不一致")
         return;
       }
-      const res = await axios.post(`${base_url}users/sign_up`, dataToSend);
+      const res = await axios.post(`${VITE_APP_HOST}/users/sign_up`, dataToSend);
       if (res.status) {
         Swal.fire({
           toast: true,
